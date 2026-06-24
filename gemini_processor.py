@@ -144,7 +144,25 @@ def generate_carousel(category: str, gender: str, language: str = "english") -> 
             else:
                 print(f"  [gemini] Error ({exc.__class__.__name__}: {err[:80]}) — retrying...")
 
+    # Gemini exhausted — fall back to Groq
+    print("  [groq] Gemini exhausted — falling back to Groq...")
+    for attempt in range(1, 4):
+        print(f"  [groq] Calling {GROQ_TEXT_MODEL} (attempt {attempt})...")
+        try:
+            data = _call_groq(prompt)
+            me_wc, me_min = _me_word_count(data)
+            if me_wc < me_min:
+                print(f"  [groq] Me: too short ({me_wc}/{me_min} words) — retrying...")
+                continue
+            wc, minimum = _krishna_word_count(data, "groq")
+            if wc >= minimum:
+                print(f"  [groq] OK (Me:{me_wc}w Krishna:{wc}w)")
+                return data
+            print(f"  [groq] Krishna too short ({wc}/{minimum} words) — retrying...")
+        except Exception as exc:
+            print(f"  [groq] Error ({exc.__class__.__name__}: {str(exc)[:80]}) — retrying...")
+
     raise RuntimeError(
-        "Quote generation failed after 5 Gemini attempts. "
-        "Check GEMINI_API_KEY or wait for rate limit to clear."
+        "Quote generation failed after 5 Gemini + 3 Groq attempts. "
+        "Check API keys or wait for rate limits to clear."
     )
