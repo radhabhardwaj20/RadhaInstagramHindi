@@ -1,0 +1,62 @@
+name: Post to Instagram (Hindi)
+
+on:
+  schedule:
+    # Morning window — 3 posts (7 AM–9 AM IST)
+    - cron: '30 1 * * *'   # 7:00 AM IST
+    - cron: '30 2 * * *'   # 8:00 AM IST
+    - cron: '30 3 * * *'   # 9:00 AM IST
+    # Blank window: 10 AM–3 PM IST — no posts
+    # Evening/Night window — 9 posts (4 PM–12 AM IST)
+    - cron: '30 10 * * *'  # 4:00 PM IST
+    - cron: '30 11 * * *'  # 5:00 PM IST
+    - cron: '30 12 * * *'  # 6:00 PM IST
+    - cron: '30 13 * * *'  # 7:00 PM IST
+    - cron: '30 14 * * *'  # 8:00 PM IST
+    - cron: '30 15 * * *'  # 9:00 PM IST
+    - cron: '30 16 * * *'  # 10:00 PM IST
+    - cron: '30 17 * * *'  # 11:00 PM IST
+    - cron: '30 18 * * *'  # 12:00 AM IST (midnight)
+  workflow_dispatch:        # manual trigger from GitHub UI
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install ffmpeg
+        run: sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          GEMINI_API_KEY:           ${{ secrets.GEMINISECRET }}
+          INSTAGRAM_USERNAME:       ${{ secrets.INSTAUSERNAMESECRET }}
+          IG_USER_ID:               ${{ secrets.IGUSERIDSECRET }}
+          IG_ACCESS_TOKEN:          ${{ secrets.IGACCESSTOKENSECRET }}
+          IG_APP_SECRET:            ${{ secrets.IGAPPSECRET }}
+          CLOUDINARY_CLOUD_NAME:    ${{ secrets.CLOUDINARYNAME }}
+          CLOUDINARY_API_KEY:       ${{ secrets.CLOUDINARYKEY }}
+          CLOUDINARY_API_SECRET:    ${{ secrets.CLOUDINARYSECRET }}
+        run: python main.py --once
+
+      - name: Save history files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add category_history.json audio_history.json template_history.json || true
+          git diff --cached --quiet || (git commit -m "chore: update history after run [skip ci]" && git push)
