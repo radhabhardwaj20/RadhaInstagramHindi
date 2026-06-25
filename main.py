@@ -241,7 +241,7 @@ def run_pipeline() -> None:
 
         # STEP 4: Compose Reel + post
         krishna_tag = random.choice(KRISHNA_TAG_POOL)
-        ig_caption = f"{data['caption']}\n\n{data['hashtags']} {krishna_tag}"
+        ig_caption = f"{data['caption']}\n\n{data['hashtags']} {krishna_tag}\n\n🌸 @krishnahasyou_ | English page: @krishnahasyou"
         reel_path  = str(OUTPUT_DIR / f"reel_{run_id}.mp4")
 
         print("\n[4/4] Composing Reel video...")
